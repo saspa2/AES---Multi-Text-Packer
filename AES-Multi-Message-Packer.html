@@ -6,10 +6,71 @@
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 24px 28px 40px;  /* کمی فشرده‌تر در راستای افقی */
+      margin: 24px 28px 40px;
       direction: rtl;
       text-align: right;
       color: #222;
+    }
+
+    body[dir="ltr"] {
+      direction: ltr;
+      text-align: left;
+    }
+
+    /* سوییچ زبان: دو دکمه با پرچم */
+    .lang-switcher {
+      position: fixed;
+      top: 12px;
+      left: 16px;
+      display: flex;
+	  flex-direction: column;
+	  align-items: flex-start;  /* بهتر برای حالت عمودی */
+      gap: 6px;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 4px 8px;
+      border-radius: 999px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      z-index: 20;
+    }
+
+    .lang-switcher-label {
+      margin-inline-end: 4px;
+      white-space: nowrap;
+    }
+
+    .lang-btn {
+      border: 1px solid #ccc;
+      border-radius: 999px;
+      padding: 2px 10px;
+      background: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font: inherit;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    }
+
+    .lang-btn .flag {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .lang-btn.active {
+      background: #1976d2;
+      color: #fff;
+      border-color: #1976d2;
+    }
+
+    .lang-btn.active .flag {
+      filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
+    }
+
+    .lang-btn:active {
+      transform: scale(0.97);
     }
 
     h1 {
@@ -36,7 +97,7 @@
     }
 
     .section {
-      margin-bottom: 64px; /* فاصلهٔ بخش‌ها دو برابر شده */
+      margin-bottom: 64px;
     }
 
     .columns-header {
@@ -89,7 +150,7 @@
       padding: 7px 9px;
       box-sizing: border-box;
       resize: vertical;
-      min-height: 80px;      /* جمله‌ها ارتفاع اولیه دارند */
+      min-height: 80px;
     }
 
     .field-group input {
@@ -293,7 +354,6 @@
       background: #d32f2f;
     }
 
-    /* واکنش‌گرایی برای موبایل و عرض‌های کم‌تر */
     @media (max-width: 760px) {
       body {
         margin: 16px 14px 28px;
@@ -325,8 +385,21 @@
   </style>
 </head>
 <body>
-  <h1>بستهٔ چندمتنی با AES</h1>
-  <p class="description">
+  <!-- سوییچ زبان: دو دکمه با پرچم -->
+  <div class="lang-switcher">
+    <span class="lang-switcher-label" id="langSelectLabel">زبان رابط:</span>
+    <button type="button" class="lang-btn active" data-lang="fa" id="langBtnFa">
+      <span class="flag">🇮🇷</span>
+      <span id="langBtnFaText">فارسی</span>
+    </button>
+    <button type="button" class="lang-btn" data-lang="en" id="langBtnEn">
+      <span class="flag">🇬🇧</span>
+      <span id="langBtnEnText">English</span>
+    </button>
+  </div>
+
+  <h1 id="appTitle">بستهٔ چندمتنی با AES</h1>
+  <p class="description" id="appDescription">
     هر ردیف یک جمله و یک رمز دارد. بستهٔ نهایی را می‌توان با هر کدام از رمزها باز کرد و فقط جملهٔ مربوط به همان رمز نمایش داده می‌شود.
   </p>
 
@@ -334,21 +407,20 @@
 
   <!-- 1) تعریف جمله‌ها و رمزها -->
   <div class="section" id="section-define">
-    <h2>۱) تعریف جمله‌ها و رمزها</h2>
+    <h2 id="section1Title">۱) تعریف جمله‌ها و رمزها</h2>
 
     <div class="columns-header">
-      <span>رمزها</span>
-      <span>جمله‌ها</span>
+      <span id="columnsKeysLabel">رمزها</span>
+      <span id="columnsTextsLabel">جمله‌ها</span>
     </div>
 
     <div id="pairsContainer"></div>
 
     <div class="rows-footer">
-      <!-- جا عوض شد: اول افزودن/حذف، بعد دکمهٔ پاک‌کردن همه -->
       <div class="rows-footer-left">
         <button id="addRowBtn" class="row-btn">
           <span class="icon">+</span>
-          <span>افزودن جملهٔ جدید</span>
+          <span id="addRowBtnText">افزودن جملهٔ جدید</span>
         </button>
       </div>
 
@@ -358,17 +430,16 @@
 
   <!-- 2) ساخت بستهٔ رمزنگاری‌شده -->
   <div class="section">
-    <h2>۲) ساخت بستهٔ رمزنگاری‌شده</h2>
-    <p class="note">متن بستهٔ رمزنگاری‌شده (برای ذخیره یا ارسال کپی کن):</p>
+    <h2 id="section2Title">۲) ساخت بستهٔ رمزنگاری‌شده</h2>
+    <p class="note" id="packageNote">متن بستهٔ رمزنگاری‌شده (برای ذخیره یا ارسال کپی کن):</p>
 
-    <!-- دکمه بالا آمده، قبل از فیلد متن -->
     <div class="controls-row">
       <button id="encryptBtn">تولید بستهٔ رمزنگاری‌شده از جمله‌ها و رمزها</button>
       <span id="encryptStatus" class="result-text"></span>
     </div>
 
     <div class="controls-row">
-      <span>حداقل تعداد جمله‌ها در بسته:</span>
+      <span id="minRecordsLabel">حداقل تعداد جمله‌ها در بسته:</span>
       <input id="minRecordsInput" type="number" class="small-input" min="1" step="1" value="111" />
       <span class="help-wrapper">
         <button type="button" id="minRecordsHelp" class="help-icon" aria-label="راهنما دربارهٔ حداقل تعداد جمله‌ها">؟</button>
@@ -383,16 +454,16 @@
 
   <!-- 3) باز کردن بسته با یک رمز -->
   <div class="section">
-    <h2>۳) باز کردن بسته با یک رمز</h2>
+    <h2 id="section3Title">۳) باز کردن بسته با یک رمز</h2>
 
     <div class="controls-row">
-      <span>رمزی که با آن می‌خواهی بسته را باز کنی:</span>
+      <span id="openKeyLabel">رمزی که با آن می‌خواهی بسته را باز کنی:</span>
       <input id="openKeyInput" type="text" class="small-input" placeholder="رمز را اینجا بنویس..." />
       <button id="openBtn">باز کردن بسته با این رمز</button>
     </div>
 
     <div>
-      <label for="openedPlain">جمله‌ای که با این رمز تولید شده بود:</label>
+      <label for="openedPlain" id="openedPlainLabel">جمله‌ای که با این رمز تولید شده بود:</label>
       <textarea id="openedPlain" readonly placeholder="بعد از باز کردن بسته، جملهٔ مربوط به این رمز اینجا نشان داده می‌شود."></textarea>
       <div id="openStatus" class="result-text"></div>
     </div>
@@ -403,10 +474,108 @@
     const enc = new TextEncoder();
     const dec = new TextDecoder();
 
+    // --- تنظیم چندزبانه رابط کاربری ---
+    const uiTexts = {
+      fa: {
+        appTitle: "بستهٔ چندمتنی با AES",
+        description: "هر ردیف یک جمله و یک رمز دارد. بستهٔ نهایی را می‌توان با هر کدام از رمزها باز کرد و فقط جملهٔ مربوط به همان رمز نمایش داده می‌شود.",
+        section1Title: "۱) تعریف جمله‌ها و رمزها",
+        section2Title: "۲) ساخت بستهٔ رمزنگاری‌شده",
+        section3Title: "۳) باز کردن بسته با یک رمز",
+        columnsKeys: "رمزها",
+        columnsTexts: "جمله‌ها",
+        addRow: "افزودن جملهٔ جدید",
+        clearRows: "پاک‌کردن همهٔ ردیف‌ها",
+        notePackage: "متن بستهٔ رمزنگاری‌شده (برای ذخیره یا ارسال کپی کن):",
+        encryptBtn: "تولید بستهٔ رمزنگاری‌شده از جمله‌ها و رمزها",
+        minRecordsLabel: "حداقل تعداد جمله‌ها در بسته:",
+        minRecordsTooltip: "حداقل تعداد کل رکوردها داخل بسته (جملهٔ واقعی + جملهٔ padding). عدد بزرگ‌تر، حدس‌زدن تعداد جمله‌های واقعی را سخت‌تر می‌کند.",
+        packagePlaceholder: "اینجا بستهٔ رمزنگاری‌شده تولید می‌شود یا قرار بده...",
+        openSectionKeyLabel: "رمزی که با آن می‌خواهی بسته را باز کنی:",
+        openKeyPlaceholder: "رمز را اینجا بنویس...",
+        openBtn: "باز کردن بسته با این رمز",
+        openedPlainLabel: "جمله‌ای که با این رمز تولید شده بود:",
+        openedPlainPlaceholder: "بعد از باز کردن بسته، جملهٔ مربوط به این رمز اینجا نشان داده می‌شود.",
+        encryptNeedOne: "حداقل یک جمله و رمز معتبر لازم است.",
+        encryptSuccess: "بسته با موفقیت ساخته شد. می‌توانی آن را کپی و ذخیره کنی.",
+        encryptError: "خطایی رخ داد. دوباره تلاش کن.",
+        openNeedBoth: "بسته و رمز را وارد کن.",
+        openSuccess: "جمله با موفقیت بازیابی شد.",
+        openNotFound: "هیچ جمله‌ای با این رمز در بسته پیدا نشد.",
+        openInvalid: "بسته معتبر نیست یا خراب شده است.",
+        confirmClear: "همهٔ ردیف‌ها پاک شوند؟",
+		langLabel: "UI language:",
+        langFa: "فارسی",
+        langEn: "English"
+      },
+      en: {
+        appTitle: "AES Multi-Message Package",
+        description: "Each row has a sentence and a key. The final package can be opened with any of the keys, and only the sentence belonging to that key will be shown.",
+        section1Title: "1) Define sentences and keys",
+        section2Title: "2) Build encrypted package",
+        section3Title: "3) Open the package with a key",
+        columnsKeys: "Keys",
+        columnsTexts: "Sentences",
+        addRow: "Add new sentence",
+        clearRows: "Clear all rows",
+        notePackage: "Encrypted package text (copy it to save or send):",
+        encryptBtn: "Generate encrypted package from sentences and keys",
+        minRecordsLabel: "Minimum total sentences in package:",
+        minRecordsTooltip: "Minimum total records inside the package (real sentences + padding sentences). A bigger number makes it harder to guess how many real sentences exist.",
+        packagePlaceholder: "The encrypted package will be generated here, or paste one to open...",
+        openSectionKeyLabel: "Key you want to open the package with:",
+        openKeyPlaceholder: "Type the key here...",
+        openBtn: "Open package with this key",
+        openedPlainLabel: "Sentence that was generated with this key:",
+        openedPlainPlaceholder: "After opening the package, the sentence for this key will appear here.",
+        encryptNeedOne: "At least one valid sentence and key is required.",
+        encryptSuccess: "Package created successfully. You can copy and save it.",
+        encryptError: "An error occurred. Please try again.",
+        openNeedBoth: "Enter the package and the key.",
+        openSuccess: "Sentence recovered successfully.",
+        openNotFound: "No sentence with this key was found in the package.",
+        openInvalid: "The package is invalid or corrupted.",
+        confirmClear: "Clear all rows?",
+        langLabel: "زبان رابط:",
+        langFa: "Persian",
+        langEn: "English"
+      }
+    };
+
+    let currentLang = "fa";
+
+    function getSentenceLabel(lang, index) {
+      if (lang === "fa") {
+        return "جملهٔ " + index;
+      }
+      return "Sentence " + index;
+    }
+
+    function getSentencePlaceholder(lang, index) {
+      if (lang === "fa") {
+        return "جملهٔ " + index + " را اینجا بنویس...";
+      }
+      return "Write sentence " + index + " here...";
+    }
+
+    function getKeyLabel(lang, index) {
+      if (lang === "fa") {
+        return "رمز جملهٔ " + index;
+      }
+      return "Key for sentence " + index;
+    }
+
+    function getKeyPlaceholder(lang, index) {
+      if (lang === "fa") {
+        return "رمز جملهٔ " + index;
+      }
+      return "Sentence " + index + " key";
+    }
+
     // --- تنظیمات و توابع padding ---
     const PADDING_TEXT = "This is a useless text.";
-    const DEFAULT_MIN_TOTAL_RECORDS = 111;   // مقدار پیش‌فرض برای حداقل تعداد جمله‌ها (واقعی + padding)
-    const PADDING_KEY_MIN_LENGTH = 35;       // حداقل طول رمز padding
+    const DEFAULT_MIN_TOTAL_RECORDS = 111;
+    const PADDING_KEY_MIN_LENGTH = 35;
     const PADDING_KEY_CHARSET =
       "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+[]{}";
 
@@ -422,7 +591,6 @@
       return result;
     }
 
-    // بررسی شباهت کلید padding با کلیدهای واقعی
     function isKeyTooSimilar(key, existingKeys) {
       const lowerKey = key.toLowerCase();
       return existingKeys.some((k) => {
@@ -435,7 +603,6 @@
       });
     }
 
-    // بررسی اشتراک زیررشته‌های نسبتاً بلند (برای تشخیص شباهت)
     function sharesLongSubstring(a, b, minLen = 5) {
       if (!a || !b) return false;
       if (a.length < minLen || b.length < minLen) return false;
@@ -456,7 +623,6 @@
       return false;
     }
 
-    // --- تبدیل‌های کمکی Base64 ---
     function bufToBase64(buf) {
       const bytes = new Uint8Array(buf);
       let binary = "";
@@ -475,7 +641,6 @@
       return bytes.buffer;
     }
 
-    // --- اشتقاق کلید از رمز عبور با PBKDF2 ---
     async function deriveKeyFromPassword(password, salt) {
       const keyMaterial = await crypto.subtle.importKey(
         "raw",
@@ -499,7 +664,6 @@
       );
     }
 
-    // --- رمزنگاری با AES-GCM ---
     async function encryptAESGCM(plainText, password) {
       const salt = crypto.getRandomValues(new Uint8Array(16));
       const key = await deriveKeyFromPassword(password, salt);
@@ -518,7 +682,6 @@
       };
     }
 
-    // --- رمزگشایی با AES-GCM ---
     async function decryptAESGCM(record, password) {
       const salt = new Uint8Array(base64ToBuf(record.salt));
       const iv = new Uint8Array(base64ToBuf(record.iv));
@@ -535,12 +698,107 @@
       return dec.decode(plainBuf);
     }
 
-    // --- مدیریت ردیف‌ها (جمله + رمز) ---
     const pairsContainer = document.getElementById("pairsContainer");
     const addRowBtn = document.getElementById("addRowBtn");
+    const addRowBtnText = document.getElementById("addRowBtnText");
     const clearRowsBtn = document.getElementById("clearRowsBtn");
 
+    const encryptBtn = document.getElementById("encryptBtn");
+    const packageText = document.getElementById("packageText");
+    const encryptStatus = document.getElementById("encryptStatus");
+    const minRecordsInput = document.getElementById("minRecordsInput");
+    const minRecordsHelp = document.getElementById("minRecordsHelp");
+    const minRecordsTooltip = document.getElementById("minRecordsTooltip");
+
+    const openBtn = document.getElementById("openBtn");
+    const openKeyInput = document.getElementById("openKeyInput");
+    const openedPlain = document.getElementById("openedPlain");
+    const openStatus = document.getElementById("openStatus");
+
+    const appTitleEl = document.getElementById("appTitle");
+    const appDescriptionEl = document.getElementById("appDescription");
+    const section1TitleEl = document.getElementById("section1Title");
+    const section2TitleEl = document.getElementById("section2Title");
+    const section3TitleEl = document.getElementById("section3Title");
+    const columnsKeysLabelEl = document.getElementById("columnsKeysLabel");
+    const columnsTextsLabelEl = document.getElementById("columnsTextsLabel");
+    const packageNoteEl = document.getElementById("packageNote");
+    const minRecordsLabelEl = document.getElementById("minRecordsLabel");
+    const openKeyLabelEl = document.getElementById("openKeyLabel");
+    const openedPlainLabelEl = document.getElementById("openedPlainLabel");
+
+    const langSelectLabel = document.getElementById("langSelectLabel");
+    const langBtnFa = document.getElementById("langBtnFa");
+    const langBtnEn = document.getElementById("langBtnEn");
+    const langBtnFaText = document.getElementById("langBtnFaText");
+    const langBtnEnText = document.getElementById("langBtnEnText");
+
     let rowCount = 0;
+
+    function applyLanguageToStaticTexts(lang) {
+      const t = uiTexts[lang] || uiTexts.fa;
+
+      if (appTitleEl) appTitleEl.textContent = t.appTitle;
+      if (appDescriptionEl) appDescriptionEl.textContent = t.description;
+      if (section1TitleEl) section1TitleEl.textContent = t.section1Title;
+      if (section2TitleEl) section2TitleEl.textContent = t.section2Title;
+      if (section3TitleEl) section3TitleEl.textContent = t.section3Title;
+      if (columnsKeysLabelEl) columnsKeysLabelEl.textContent = t.columnsKeys;
+      if (columnsTextsLabelEl) columnsTextsLabelEl.textContent = t.columnsTexts;
+      if (packageNoteEl) packageNoteEl.textContent = t.notePackage;
+      if (minRecordsLabelEl) minRecordsLabelEl.textContent = t.minRecordsLabel;
+      if (minRecordsTooltip) minRecordsTooltip.textContent = t.minRecordsTooltip;
+      if (encryptBtn) encryptBtn.textContent = t.encryptBtn;
+      if (packageText) packageText.placeholder = t.packagePlaceholder;
+      if (openKeyLabelEl) openKeyLabelEl.textContent = t.openSectionKeyLabel;
+      if (openKeyInput) openKeyInput.placeholder = t.openKeyPlaceholder;
+      if (openBtn) openBtn.textContent = t.openBtn;
+      if (openedPlainLabelEl) openedPlainLabelEl.textContent = t.openedPlainLabel;
+      if (openedPlain) openedPlain.placeholder = t.openedPlainPlaceholder;
+      if (addRowBtnText) addRowBtnText.textContent = t.addRow;
+      if (clearRowsBtn) clearRowsBtn.textContent = t.clearRows;
+      if (langSelectLabel) langSelectLabel.textContent = t.langLabel;
+      if (langBtnFaText) langBtnFaText.textContent = t.langFa;
+      if (langBtnEnText) langBtnEnText.textContent = t.langEn;
+    }
+
+    function updateRowTextsForLanguage(lang) {
+      const rows = pairsContainer.querySelectorAll(".pair-row");
+      rows.forEach((row) => {
+        const index = row.dataset.index || "1";
+        const textLabel = row.querySelector(".text-group label");
+        const textArea = row.querySelector(".plain-input");
+        const keyLabel = row.querySelector(".key-group label");
+        const keyInput = row.querySelector(".key-input");
+
+        if (textLabel) textLabel.textContent = getSentenceLabel(lang, index);
+        if (textArea && !textArea.value) {
+          textArea.placeholder = getSentencePlaceholder(lang, index);
+        }
+        if (keyLabel) keyLabel.textContent = getKeyLabel(lang, index);
+        if (keyInput && !keyInput.value) {
+          keyInput.placeholder = getKeyPlaceholder(lang, index);
+        }
+      });
+    }
+
+    function setLanguage(lang) {
+      if (!uiTexts[lang]) {
+        lang = "fa";
+      }
+      currentLang = lang;
+
+      document.documentElement.lang = lang === "fa" ? "fa" : "en";
+      document.body.setAttribute("dir", lang === "fa" ? "rtl" : "ltr");
+
+      if (langBtnFa && langBtnEn) {
+        langBtnFa.classList.toggle("active", lang === "fa");
+        langBtnEn.classList.toggle("active", lang === "en");
+      }
+
+      applyLanguageToStaticTexts(lang);
+      updateRowTextsForLanguage(lang);
+    }
 
     function addRow() {
       rowCount++;
@@ -548,26 +806,25 @@
 
       const row = document.createElement("div");
       row.className = "pair-row";
+      row.dataset.index = rowIndex;
 
-      // ستون جمله (سمت راست در RTL)
       const textGroup = document.createElement("div");
       textGroup.className = "field-group text-group";
       const textLabel = document.createElement("label");
-      textLabel.textContent = "جملهٔ " + rowIndex;
+      textLabel.textContent = getSentenceLabel(currentLang, rowIndex);
       const textArea = document.createElement("textarea");
-      textArea.placeholder = "جملهٔ " + rowIndex + " را اینجا بنویس...";
+      textArea.placeholder = getSentencePlaceholder(currentLang, rowIndex);
       textArea.className = "plain-input";
       textGroup.appendChild(textLabel);
       textGroup.appendChild(textArea);
 
-      // ستون رمز
       const keyGroup = document.createElement("div");
       keyGroup.className = "field-group key-group";
       const keyLabel = document.createElement("label");
-      keyLabel.textContent = "رمز جملهٔ " + rowIndex;
+      keyLabel.textContent = getKeyLabel(currentLang, rowIndex);
       const keyInput = document.createElement("input");
       keyInput.type = "text";
-      keyInput.placeholder = "رمز جملهٔ " + rowIndex;
+      keyInput.placeholder = getKeyPlaceholder(currentLang, rowIndex);
       keyInput.className = "key-input";
       keyGroup.appendChild(keyLabel);
       keyGroup.appendChild(keyInput);
@@ -591,25 +848,19 @@
     });
 
     clearRowsBtn.addEventListener("click", () => {
-      if (confirm("همهٔ ردیف‌ها پاک شوند؟")) {
+      if (confirm(uiTexts[currentLang].confirmClear)) {
         pairsContainer.innerHTML = "";
         rowCount = 0;
         addRow();
         addRow();
-        document.getElementById("packageText").value = "";
-        document.getElementById("encryptStatus").textContent = "";
-        document.getElementById("openKeyInput").value = "";
-        document.getElementById("openedPlain").value = "";
-        document.getElementById("openStatus").textContent = "";
+        packageText.value = "";
+        encryptStatus.textContent = "";
+        openKeyInput.value = "";
+        openedPlain.value = "";
+        openStatus.textContent = "";
+        updateRowTextsForLanguage(currentLang);
       }
     });
-
-    const encryptBtn = document.getElementById("encryptBtn");
-    const packageText = document.getElementById("packageText");
-    const encryptStatus = document.getElementById("encryptStatus");
-    const minRecordsInput = document.getElementById("minRecordsInput");
-    const minRecordsHelp = document.getElementById("minRecordsHelp");
-    const minRecordsTooltip = document.getElementById("minRecordsTooltip");
 
     let minRecordsTooltipTimer = null;
     if (minRecordsHelp && minRecordsTooltip) {
@@ -634,7 +885,6 @@
         const userKeys = [];
         const rows = pairsContainer.querySelectorAll(".pair-row");
 
-        // ۱) اضافه‌کردن جمله‌های واقعی
         for (const row of rows) {
           const plain = row.querySelector(".plain-input").value.trim();
           const key = row.querySelector(".key-input").value.trim();
@@ -646,15 +896,13 @@
         }
 
         if (records.length === 0) {
-          encryptStatus.textContent = "حداقل یک جمله و رمز معتبر لازم است.";
+          encryptStatus.textContent = uiTexts[currentLang].encryptNeedOne;
           return;
         }
 
-        // ۲) تولید padding تا رسیدن به حداقل تعداد رکورد موردنظر
-        const allKeys = userKeys.slice(); // برای بررسی شباهت
+        const allKeys = userKeys.slice();
         const currentCount = records.length;
 
-        // تعیین حداقل تعداد رکوردهای نهایی بر اساس ورودی کاربر
         let minTotalRecords = Math.max(DEFAULT_MIN_TOTAL_RECORDS, currentCount);
         if (minRecordsInput) {
           const raw = String(minRecordsInput.value || "").trim();
@@ -673,7 +921,6 @@
           do {
             padKey = randomPaddingKey(PADDING_KEY_MIN_LENGTH);
             attempts++;
-            // برای جلوگیری از لوپ بی‌نهایت، بعد از ۱۰۰ تلاش، همان آخرین کلید را قبول می‌کنیم
             if (attempts > 100) {
               break;
             }
@@ -687,17 +934,12 @@
         const json = JSON.stringify(records);
         const base64Package = bufToBase64(enc.encode(json));
         packageText.value = base64Package;
-        encryptStatus.textContent = "بسته با موفقیت ساخته شد. می‌توانی آن را کپی و ذخیره کنی.";
+        encryptStatus.textContent = uiTexts[currentLang].encryptSuccess;
       } catch (e) {
         console.error(e);
-        encryptStatus.textContent = "خطایی رخ داد. دوباره تلاش کن.";
+        encryptStatus.textContent = uiTexts[currentLang].encryptError;
       }
     });
-
-    const openBtn = document.getElementById("openBtn");
-    const openKeyInput = document.getElementById("openKeyInput");
-    const openedPlain = document.getElementById("openedPlain");
-    const openStatus = document.getElementById("openStatus");
 
     openBtn.addEventListener("click", async () => {
       openedPlain.value = "";
@@ -707,7 +949,7 @@
       const key = openKeyInput.value.trim();
 
       if (!pkg || !key) {
-        openStatus.textContent = "بسته و رمز را وارد کن.";
+        openStatus.textContent = uiTexts[currentLang].openNeedBoth;
         return;
       }
 
@@ -723,27 +965,35 @@
               continue;
             }
             openedPlain.value = plain;
-            openStatus.textContent = "جمله با موفقیت بازیابی شد.";
+            openStatus.textContent = uiTexts[currentLang].openSuccess;
             found = true;
             break;
           } catch (err) {
-            // نادیده می‌گیریم و ادامه می‌دهیم
+            // ignore and continue
           }
         }
 
         if (!found) {
-          openStatus.textContent = "هیچ جمله‌ای با این رمز در بسته پیدا نشد.";
+          openStatus.textContent = uiTexts[currentLang].openNotFound;
         }
       } catch (e) {
         console.error(e);
-        openStatus.textContent = "بسته معتبر نیست یا خراب شده است.";
+        openStatus.textContent = uiTexts[currentLang].openInvalid;
       }
     });
 
-    // شروع با دو ردیف نمونه
+    // تغییر زبان با دکمه‌ها
+    if (langBtnFa) {
+      langBtnFa.addEventListener("click", () => setLanguage("fa"));
+    }
+    if (langBtnEn) {
+      langBtnEn.addEventListener("click", () => setLanguage("en"));
+    }
+
+    // شروع با دو ردیف نمونه و اعمال زبان اولیه
     addRow();
     addRow();
+    setLanguage(currentLang);
   </script>
 </body>
 </html>
-
