@@ -4,7 +4,10 @@
 
 
 <div dir="rtl">
-  ## فارسی 🇮🇷  
+
+  ## فارسی
+🇮🇷 
+  
 بستهٔ چند‌متنی با AES
 
 این پروژه یک ابزار ساده و آموزشی برای رمزنگاری چند متن مختلف با کلیدهای متفاوت و قرار دادن همهٔ آن‌ها در یک بستهٔ رمزنگاری‌شدهٔ واحد است. هر کلید فقط متن مربوط به خودش را بازیابی می‌کند و بقیهٔ رکوردها غیرقابل‌تشخیص هستند.
@@ -46,7 +49,8 @@ https://saspa2.github.io/AES---Multi-Text-Packer/AES-Multi-Message-Packer.html
 
 </div>
 
-## English 🇬🇧
+## English
+🇬🇧
 
 AES Multi-Message Package
 
@@ -87,5 +91,6 @@ Using the online version may expose your keys or data (due to internet-connected
 
 Recommended:
 Download AES-Multi-Message-Packer.html and run it offline on a secure system.
+
 
 
