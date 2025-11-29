@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>بسته چندمتنی با AES</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 24px 28px 40px;  /* کمی فشرده‌تر در راستای افقی */
+      direction: rtl;
+      text-align: right;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    p.description {
+      text-align: center;
+      margin: 0 0 18px;
+      font-size: 0.9rem;
+      color: #444;
+    }
+
+    hr {
+      margin: 24px 0 28px;
+      border: none;
+      border-top: 1px solid #ddd;
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .section {
+      margin-bottom: 64px; /* فاصلهٔ بخش‌ها دو برابر شد */
+    }
+
+    .columns-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 0.92rem;
+      margin-bottom: 8px;
+      color: #444;
+    }
+
+    .columns-header span:first-child {
+      margin-left: 32px;
+    }
+
+    #pairsContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pair-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr) 34px;
+      gap: 8px;
+      align-items: stretch;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      background: #fafafa;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-group label {
+      font-size: 0.8rem;
+      color: #555;
+    }
+
+    .field-group textarea,
+    .field-group input {
+      font: inherit;
+      border-radius: 8px;
+      border: 1px solid #d0d0d0;
+      padding: 7px 9px;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 80px;      /* جمله‌ها ارتفاع اولیه دارند */
+    }
+
+    .field-group input {
+      min-height: 0;
+      height: 34px;
+    }
+
+    .text-group textarea {
+      min-height: 140px;
+    }
+
+    .key-group input {
+      min-height: 0;
+    }
+
+    .remove-btn {
+      align-self: flex-start;
+      margin-top: 24px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: none;
+      background: #ffe8e8;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #b00020;
+    }
+
+    .remove-btn:hover {
+      background: #ffd2d2;
+    }
+
+    .rows-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      gap: 12px;
+    }
+
+    .rows-footer-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn,
+    .danger-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1976d2;
+      color: #fff;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: #155a9e;
+    }
+
+    .danger-btn {
+      background: #d32f2f;
+    }
+
+    .danger-btn:hover {
+      background: #b71c1c;
+    }
+
+    .note {
+      font-size: 0.86rem;
+      color: #555;
+      margin: 4px 0 6px;
+    }
+
+    textarea#packageText,
+    textarea#openedPlain {
+      width: 100%;
+      box-sizing: border-box;
+      font: inherit;
+      border-radius: 8px;
+      border: 1px solid #d0d0d0;
+      padding: 8px 10px;
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 16px;
+    }
+
+    .controls-row > span {
+      font-size: 0.85rem;
+      color: #444;
+    }
+
+    .small-input {
+      max-width: 260px;
+    }
+
+    .help-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .help-icon {
+      border: none;
+      padding: 0;
+      margin: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      line-height: 1;
+      cursor: default;
+      background: #e0e0e0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tooltip-bubble {
+      position: absolute;
+      bottom: 120%;
+      right: 0;
+      max-width: 260px;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      background: #333;
+      color: #fff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 10;
+      white-space: normal;
+    }
+
+    .tooltip-bubble.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .result-text {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: #444;
+      min-height: 1.2em;
+    }
+
+    .mono {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .row-btn {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      font: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.88rem;
+    }
+
+    .row-btn span.icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1976d2;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .row-btn.danger span.icon {
+      background: #d32f2f;
+    }
+
+    /* واکنش‌گرایی برای موبایل و عرض‌های کم‌تر */
+    @media (max-width: 760px) {
+      body {
+        margin: 16px 14px 28px;
+      }
+
+      .pair-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .remove-btn {
+        margin-top: 4px;
+        justify-self: flex-end;
+      }
+
+      .text-group textarea {
+        min-height: 120px;
+      }
+
+      .columns-header {
+        display: none;
+      }
+
+      .rows-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>بستهٔ چندمتنی با AES</h1>
+  <p class="description">
+    هر ردیف یک جمله و یک رمز دارد. بستهٔ نهایی را می‌توان با هر کدام از رمزها باز کرد و فقط جملهٔ مربوط به همان رمز نمایش داده می‌شود.
+  </p>
+
+  <hr />
+
+  <!-- 1) تعریف جمله‌ها و رمزها -->
+  <div class="section" id="section-define">
+    <h2>۱) تعریف جمله‌ها و رمزها</h2>
+
+    <div class="columns-header">
+      <span>رمزها</span>
+      <span>جمله‌ها</span>
+    </div>
+
+    <div id="pairsContainer"></div>
+
+    <div class="rows-footer">
+      <!-- جا عوض شد: اول افزودن/حذف، بعد دکمهٔ پاک‌کردن همه -->
+      <div class="rows-footer-left">
+        <button id="addRowBtn" class="row-btn">
+          <span class="icon">+</span>
+          <span>افزودن جملهٔ جدید</span>
+        </button>
+      </div>
+
+      <button id="clearRowsBtn" class="danger-btn">پاک‌کردن همهٔ ردیف‌ها</button>
+    </div>
+  </div>
+
+  <!-- 2) ساخت بستهٔ رمزنگاری‌شده -->
+  <div class="section">
+    <h2>۲) ساخت بستهٔ رمزنگاری‌شده</h2>
+    <p class="note">متن بستهٔ رمزنگاری‌شده (برای ذخیره یا ارسال کپی کن):</p>
+
+    <!-- دکمه بالا آمده، قبل از فیلد متن -->
+    <div class="controls-row">
+      <button id="encryptBtn">تولید بستهٔ رمزنگاری‌شده از جمله‌ها و رمزها</button>
+      <span id="encryptStatus" class="result-text"></span>
+    </div>
+
+    <div class="controls-row">
+      <span>حداقل تعداد جمله‌ها در بسته:</span>
+      <input id="minRecordsInput" type="number" class="small-input" min="1" step="1" value="111" />
+      <span class="help-wrapper">
+        <button type="button" id="minRecordsHelp" class="help-icon" aria-label="راهنما دربارهٔ حداقل تعداد جمله‌ها">؟</button>
+        <span class="tooltip-bubble" id="minRecordsTooltip">
+          حداقل تعداد کل رکوردها داخل بسته (جملهٔ واقعی + جملهٔ padding). عدد بزرگ‌تر، حدس‌زدن تعداد جمله‌های واقعی را سخت‌تر می‌کند.
+        </span>
+      </span>
+    </div>
+
+    <textarea id="packageText" placeholder="اینجا بستهٔ رمزنگاری‌شده تولید می‌شود یا قرار بده..."></textarea>
+  </div>
+
+  <!-- 3) باز کردن بسته با یک رمز -->
+  <div class="section">
+    <h2>۳) باز کردن بسته با یک رمز</h2>
+
+    <div class="controls-row">
+      <span>رمزی که با آن می‌خواهی بسته را باز کنی:</span>
+      <input id="openKeyInput" type="text" class="small-input" placeholder="رمز را اینجا بنویس..." />
+      <button id="openBtn">باز کردن بسته با این رمز</button>
+    </div>
+
+    <div>
+      <label for="openedPlain">جمله‌ای که با این رمز تولید شده بود:</label>
+      <textarea id="openedPlain" readonly placeholder="بعد از باز کردن بسته، جملهٔ مربوط به این رمز اینجا نشان داده می‌شود."></textarea>
+      <div id="openStatus" class="result-text"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- ابزارهای کمکی برای باینری و Base64 ---
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+
+    // --- تنظیمات و توابع padding ---
+    const PADDING_TEXT = "This is a useless text.";
+    const DEFAULT_MIN_TOTAL_RECORDS = 111;   // مقدار پیش‌فرض برای حداقل تعداد جمله‌ها (واقعی + padding)
+    const PADDING_KEY_MIN_LENGTH = 35;       // حداقل طول رمز padding
+    const PADDING_KEY_CHARSET =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+[]{}";
+
+    function randomPaddingKey(length) {
+      const chars = PADDING_KEY_CHARSET;
+      const len = Math.max(length, PADDING_KEY_MIN_LENGTH);
+      const arr = new Uint32Array(len);
+      crypto.getRandomValues(arr);
+      let result = "";
+      for (let i = 0; i < len; i++) {
+        result += chars[arr[i] % chars.length];
+      }
+      return result;
+    }
+
+    // بررسی شباهت کلید padding با کلیدهای واقعی
+    function isKeyTooSimilar(key, existingKeys) {
+      const lowerKey = key.toLowerCase();
+      return existingKeys.some((k) => {
+        const lowerExisting = k.toLowerCase();
+        return (
+          lowerExisting.includes(lowerKey) ||
+          lowerKey.includes(lowerExisting) ||
+          sharesLongSubstring(lowerKey, lowerExisting)
+        );
+      });
+    }
+
+    // بررسی اشتراک زیررشته‌های نسبتاً بلند (برای تشخیص شباهت)
+    function sharesLongSubstring(a, b, minLen = 5) {
+      if (!a || !b) return false;
+      if (a.length < minLen || b.length < minLen) return false;
+
+      let shorter = a;
+      let longer = b;
+      if (b.length < a.length) {
+        shorter = b;
+        longer = a;
+      }
+
+      for (let i = 0; i <= shorter.length - minLen; i++) {
+        const sub = shorter.slice(i, i + minLen);
+        if (longer.includes(sub)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // --- تبدیل‌های کمکی Base64 ---
+    function bufToBase64(buf) {
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBuf(base64) {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    // --- اشتقاق کلید از رمز عبور با PBKDF2 ---
+    async function deriveKeyFromPassword(password, salt) {
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(password),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+      );
+
+      return crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt,
+          iterations: 120000,
+          hash: "SHA-256",
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    // --- رمزنگاری با AES-GCM ---
+    async function encryptAESGCM(plainText, password) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKeyFromPassword(password, salt);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+
+      const cipherBuf = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        enc.encode(plainText)
+      );
+
+      return {
+        salt: bufToBase64(salt.buffer),
+        iv: bufToBase64(iv.buffer),
+        data: bufToBase64(cipherBuf),
+      };
+    }
+
+    // --- رمزگشایی با AES-GCM ---
+    async function decryptAESGCM(record, password) {
+      const salt = new Uint8Array(base64ToBuf(record.salt));
+      const iv = new Uint8Array(base64ToBuf(record.iv));
+      const ciphertext = base64ToBuf(record.data);
+
+      const key = await deriveKeyFromPassword(password, salt);
+
+      const plainBuf = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        key,
+        ciphertext
+      );
+
+      return dec.decode(plainBuf);
+    }
+
+    // --- مدیریت ردیف‌ها (جمله + رمز) ---
+    const pairsContainer = document.getElementById("pairsContainer");
+    const addRowBtn = document.getElementById("addRowBtn");
+    const clearRowsBtn = document.getElementById("clearRowsBtn");
+
+    let rowCount = 0;
+
+    function addRow() {
+      rowCount++;
+      const rowIndex = rowCount;
+
+      const row = document.createElement("div");
+      row.className = "pair-row";
+
+      // ستون جمله (سمت راست در RTL)
+      const textGroup = document.createElement("div");
+      textGroup.className = "field-group text-group";
+      const textLabel = document.createElement("label");
+      textLabel.textContent = "جملهٔ " + rowIndex;
+      const textArea = document.createElement("textarea");
+      textArea.placeholder = "جملهٔ " + rowIndex + " را اینجا بنویس...";
+      textArea.className = "plain-input";
+      textGroup.appendChild(textLabel);
+      textGroup.appendChild(textArea);
+
+      // ستون رمز
+      const keyGroup = document.createElement("div");
+      keyGroup.className = "field-group key-group";
+      const keyLabel = document.createElement("label");
+      keyLabel.textContent = "رمز جملهٔ " + rowIndex;
+      const keyInput = document.createElement("input");
+      keyInput.type = "text";
+      keyInput.placeholder = "رمز جملهٔ " + rowIndex;
+      keyInput.className = "key-input";
+      keyGroup.appendChild(keyLabel);
+      keyGroup.appendChild(keyInput);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "remove-btn";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => {
+        row.remove();
+      });
+
+      row.appendChild(keyGroup);
+      row.appendChild(textGroup);
+      row.appendChild(removeBtn);
+
+      pairsContainer.appendChild(row);
+    }
+
+    addRowBtn.addEventListener("click", () => {
+      addRow();
+    });
+
+    clearRowsBtn.addEventListener("click", () => {
+      if (confirm("همهٔ ردیف‌ها پاک شوند؟")) {
+        pairsContainer.innerHTML = "";
+        rowCount = 0;
+        addRow();
+        addRow();
+        document.getElementById("packageText").value = "";
+        document.getElementById("encryptStatus").textContent = "";
+        document.getElementById("openKeyInput").value = "";
+        document.getElementById("openedPlain").value = "";
+        document.getElementById("openStatus").textContent = "";
+      }
+    });
+
+    const encryptBtn = document.getElementById("encryptBtn");
+    const packageText = document.getElementById("packageText");
+    const encryptStatus = document.getElementById("encryptStatus");
+    const minRecordsInput = document.getElementById("minRecordsInput");
+    const minRecordsHelp = document.getElementById("minRecordsHelp");
+    const minRecordsTooltip = document.getElementById("minRecordsTooltip");
+
+    let minRecordsTooltipTimer = null;
+    if (minRecordsHelp && minRecordsTooltip) {
+      minRecordsHelp.addEventListener("mouseenter", () => {
+        minRecordsTooltipTimer = setTimeout(() => {
+          minRecordsTooltip.classList.add("visible");
+        }, 500);
+      });
+
+      minRecordsHelp.addEventListener("mouseleave", () => {
+        if (minRecordsTooltipTimer) {
+          clearTimeout(minRecordsTooltipTimer);
+          minRecordsTooltipTimer = null;
+        }
+        minRecordsTooltip.classList.remove("visible");
+      });
+    }
+
+    encryptBtn.addEventListener("click", async () => {
+      try {
+        const records = [];
+        const userKeys = [];
+        const rows = pairsContainer.querySelectorAll(".pair-row");
+
+        // ۱) اضافه‌کردن جمله‌های واقعی
+        for (const row of rows) {
+          const plain = row.querySelector(".plain-input").value.trim();
+          const key = row.querySelector(".key-input").value.trim();
+          if (!plain || !key) continue;
+
+          const rec = await encryptAESGCM(plain, key);
+          records.push(rec);
+          userKeys.push(key);
+        }
+
+        if (records.length === 0) {
+          encryptStatus.textContent = "حداقل یک جمله و رمز معتبر لازم است.";
+          return;
+        }
+
+        // ۲) تولید padding تا رسیدن به حداقل تعداد رکورد موردنظر
+        const allKeys = userKeys.slice(); // برای بررسی شباهت
+        const currentCount = records.length;
+
+        // تعیین حداقل تعداد رکوردهای نهایی بر اساس ورودی کاربر
+        let minTotalRecords = Math.max(DEFAULT_MIN_TOTAL_RECORDS, currentCount);
+        if (minRecordsInput) {
+          const raw = String(minRecordsInput.value || "").trim();
+          const parsed = parseInt(raw, 10);
+          if (!Number.isNaN(parsed) && parsed > 0) {
+            minTotalRecords = Math.max(parsed, currentCount);
+          }
+        }
+
+        const neededPadding = Math.max(0, minTotalRecords - currentCount);
+
+        for (let i = 0; i < neededPadding; i++) {
+          let padKey;
+          let attempts = 0;
+
+          do {
+            padKey = randomPaddingKey(PADDING_KEY_MIN_LENGTH);
+            attempts++;
+            // برای جلوگیری از لوپ بی‌نهایت، بعد از ۱۰۰ تلاش، همان آخرین کلید را قبول می‌کنیم
+            if (attempts > 100) {
+              break;
+            }
+          } while (isKeyTooSimilar(padKey, allKeys));
+
+          const paddingRecord = await encryptAESGCM(PADDING_TEXT, padKey);
+          records.push(paddingRecord);
+          allKeys.push(padKey);
+        }
+
+        const json = JSON.stringify(records);
+        const base64Package = bufToBase64(enc.encode(json));
+        packageText.value = base64Package;
+        encryptStatus.textContent = "بسته با موفقیت ساخته شد. می‌توانی آن را کپی و ذخیره کنی.";
+      } catch (e) {
+        console.error(e);
+        encryptStatus.textContent = "خطایی رخ داد. دوباره تلاش کن.";
+      }
+    });
+
+    const openBtn = document.getElementById("openBtn");
+    const openKeyInput = document.getElementById("openKeyInput");
+    const openedPlain = document.getElementById("openedPlain");
+    const openStatus = document.getElementById("openStatus");
+
+    openBtn.addEventListener("click", async () => {
+      openedPlain.value = "";
+      openStatus.textContent = "";
+
+      const pkg = packageText.value.trim();
+      const key = openKeyInput.value.trim();
+
+      if (!pkg || !key) {
+        openStatus.textContent = "بسته و رمز را وارد کن.";
+        return;
+      }
+
+      try {
+        const jsonStr = dec.decode(base64ToBuf(pkg));
+        const records = JSON.parse(jsonStr);
+
+        let found = false;
+        for (const rec of records) {
+          try {
+            const plain = await decryptAESGCM(rec, key);
+            if (plain === PADDING_TEXT) {
+              continue;
+            }
+            openedPlain.value = plain;
+            openStatus.textContent = "جمله با موفقیت بازیابی شد.";
+            found = true;
+            break;
+          } catch (err) {
+            // نادیده می‌گیریم و ادامه می‌دهیم
+          }
+        }
+
+        if (!found) {
+          openStatus.textContent = "هیچ جمله‌ای با این رمز در بسته پیدا نشد.";
+        }
+      } catch (e) {
+        console.error(e);
+        openStatus.textContent = "بسته معتبر نیست یا خراب شده است.";
+      }
+    });
+
+    // شروع با دو ردیف نمونه
+    addRow();
+    addRow();
+  </script>
+</body>
+</html>
