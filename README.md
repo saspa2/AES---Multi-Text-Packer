@@ -1,6 +1,10 @@
+# 🌐 Language / زبان
+
+[English](#english) | [فارسی](#فارسی)
+
+
 <div dir="rtl">
-  🇮🇷 فارسی
-  
+  ## فارسی 🇮🇷  
 بستهٔ چند‌متنی با AES
 
 این پروژه یک ابزار ساده و آموزشی برای رمزنگاری چند متن مختلف با کلیدهای متفاوت و قرار دادن همهٔ آن‌ها در یک بستهٔ رمزنگاری‌شدهٔ واحد است. هر کلید فقط متن مربوط به خودش را بازیابی می‌کند و بقیهٔ رکوردها غیرقابل‌تشخیص هستند.
@@ -41,7 +45,9 @@ https://saspa2.github.io/AES---Multi-Text-Packer/AES-Multi-Message-Packer.html
 فایل AES-Multi-Message-Packer.html را دانلود کن و آن را آفلاین روی یک سیستم امن و بدون اینترنت اجرا کن.
 
 </div>
-🇬🇧 English
+
+## English 🇬🇧
+
 AES Multi-Message Package
 
 This project is a simple educational tool for encrypting multiple independent texts using different keys and bundling all of them into a single encrypted package.
